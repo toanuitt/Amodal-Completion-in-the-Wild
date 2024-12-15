@@ -141,11 +141,16 @@ class Tester(object):
 
         for i in range(0, self.data_length):
             print(i)
-            modal, category, bboxes, amodal_gt, image_fn, occ_l = (
-                self.data_reader.get_image_instances(
-                    i, with_gt=True, load_occ_label=True
+            if self.args.dataset_format == "COCOA":
+                modal, category, bboxes, amodal_gt, image_fn, _ = (
+                    self.data_reader.get_image_instances(
+                        i, with_gt=True, load_occ_label=True
+                    )
                 )
-            )
+            elif self.args.dataset_format == "MP3D":
+                modal, category, bboxes, amodal_gt, image_fn = (
+                    self.data_reader.get_image_instances(i)
+                )
 
             # data
             image = Image.open(os.path.join(self.data_root, image_fn)).convert(
