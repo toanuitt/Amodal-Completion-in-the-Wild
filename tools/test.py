@@ -32,6 +32,7 @@ def parse_args():
     parser.add_argument("--amodal-method", required=True, type=str)
     parser.add_argument("--order-th", default=0.1, type=float)
     parser.add_argument("--amodal-th", default=0.2, type=float)
+    parser.add_argument("--dataset-format", default="COCOA", type=str)
     parser.add_argument("--annotation", required=True, type=str)
     parser.add_argument("--image-root", required=True, type=str)
     parser.add_argument("--test-num", default=-1, type=int)
@@ -62,12 +63,15 @@ class Tester(object):
 
     def prepare_data(self):
         config = self.args.data
-        dataset = "COCOA"
         self.data_root = self.args.image_root
-        if dataset == "COCOA":
+        dataset_format = self.args.dataset_format
+        if dataset_format == "COCOA":
             self.data_reader = reader.COCOADataset(self.args.annotation)
+        elif dataset_format == "MP3D":
+            self.data_reader = reader.MP3DDataset(self.args.annotation)
+
         self.data_length = self.data_reader.get_image_length()
-        self.dataset = dataset
+        self.dataset = dataset_format
         if self.args.test_num != -1:
             self.data_length = self.args.test_num
 
