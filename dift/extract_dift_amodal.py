@@ -2,8 +2,8 @@ import argparse
 import os
 import torch
 from PIL import Image
-from torchvision.transforms import PILToTensor
 from src.models.dift_sd import SDFeaturizer
+import numpy as np
 
 
 def is_image(file_name: str) -> bool:
@@ -15,7 +15,8 @@ def get_image_tensor(image_path: str, image_size: list):
     img = Image.open(image_path).convert("RGB")
     if image_size[0] != -1:
         img = img.resize(image_size)
-    img_tensor = (PILToTensor()(img) / 255.0 - 0.5) * 2
+    img_arr = np.array(img)
+    img_tensor = (torch.tensor(img_arr) / 255.0 - 0.5) * 2
 
     return img_tensor
 
