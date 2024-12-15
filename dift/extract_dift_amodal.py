@@ -64,7 +64,7 @@ def parse_args():
                             stick to the original input size. by default is 768x768.""",
     )
     parser.add_argument(
-        "--model_id",
+        "--model-id",
         default="stabilityai/stable-diffusion-2-1",
         type=str,
         help="model_id of the diffusion model in huggingface",
@@ -76,7 +76,7 @@ def parse_args():
         help="time step for diffusion, choose from range [0, 1000]",
     )
     parser.add_argument(
-        "--up_ft_index",
+        "--up-ft-index",
         default=1,
         type=int,
         choices=[0, 1, 2, 3],
@@ -89,16 +89,16 @@ def parse_args():
         help="prompt used in the stable diffusion",
     )
     parser.add_argument(
-        "--ensemble_size",
+        "--ensemble-size",
         default=8,
         type=int,
         help="number of repeated images in each batch used to get features",
     )
     parser.add_argument(
-        "--input_path", type=str, help="path to the input image file"
+        "--input-path", type=str, help="path to the input image file"
     )
     parser.add_argument(
-        "--output_path",
+        "--output-path",
         type=str,
         default="dift.pt",
         help="path to save the output features as torch tensor",
