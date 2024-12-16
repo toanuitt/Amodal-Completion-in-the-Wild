@@ -1,14 +1,11 @@
+import gc
+from typing import Any, Callable, Dict, List, Optional, Union
 from diffusers import StableDiffusionPipeline
 import torch
-import torch.nn as nn
-import matplotlib.pyplot as plt
 import numpy as np
-from typing import Any, Callable, Dict, List, Optional, Union
 from diffusers.models.unet_2d_condition import UNet2DConditionModel
 from diffusers import DDIMScheduler
-import gc
-from PIL import Image
-import ipdb
+
 
 class MyUNet2DConditionModel(UNet2DConditionModel):
     def forward(
@@ -20,7 +17,8 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         class_labels: Optional[torch.Tensor] = None,
         timestep_cond: Optional[torch.Tensor] = None,
         attention_mask: Optional[torch.Tensor] = None,
-        cross_attention_kwargs: Optional[Dict[str, Any]] = None):
+        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
+    ):
         r"""
         Args:
             sample (`torch.FloatTensor`): (batch, channel, height, width) noisy inputs tensor
@@ -64,7 +62,9 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 dtype = torch.float32 if is_mps else torch.float64
             else:
                 dtype = torch.int32 if is_mps else torch.int64
-            timesteps = torch.tensor([timesteps], dtype=dtype, device=sample.device)
+            timesteps = torch.tensor(
+                [timesteps], dtype=dtype, device=sample.device
+            )
         elif len(timesteps.shape) == 0:
             timesteps = timesteps[None].to(sample.device)
 
@@ -82,7 +82,9 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
         if self.class_embedding is not None:
             if class_labels is None:
-                raise ValueError("class_labels should be provided when num_class_embeds > 0")
+                raise ValueError(
+                    "class_labels should be provided when num_class_embeds > 0"
+                )
 
             if self.config.class_embed_type == "timestep":
                 class_labels = self.time_proj(class_labels)
@@ -98,8 +100,11 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         down_block_res_samples = (sample,)
         for i in range(len(self.down_blocks)):
             downsample_block = self.down_blocks[i]
-        # for downsample_block in self.down_blocks:
-            if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
+            # for downsample_block in self.down_blocks:
+            if (
+                hasattr(downsample_block, "has_cross_attention")
+                and downsample_block.has_cross_attention
+            ):
                 sample, res_samples = downsample_block(
                     hidden_states=sample,
                     temb=emb,
@@ -108,12 +113,13 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
             else:
-                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
+                sample, res_samples = downsample_block(
+                    hidden_states=sample, temb=emb
+                )
 
             down_block_res_samples += res_samples
-            if i+4 in up_ft_indices:
-                up_ft[i+4] = sample.detach()
-
+            if i + 4 in up_ft_indices:
+                up_ft[i + 4] = sample.detach()
 
         # 4. mid
         if self.mid_block is not None:
@@ -126,23 +132,28 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
             )
 
         # 5. up
-        
+
         for i, upsample_block in enumerate(self.up_blocks):
-            
+
             if i > np.max(up_ft_indices):
                 break
-            
+
             is_final_block = i == len(self.up_blocks) - 1
 
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
-            down_block_res_samples = down_block_res_samples[: -len(upsample_block.resnets)]
+            down_block_res_samples = down_block_res_samples[
+                : -len(upsample_block.resnets)
+            ]
 
             # if we have not reached the final block and need to forward the
             # upsample size, we do it here
             if not is_final_block and forward_upsample_size:
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
-            if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
+            if (
+                hasattr(upsample_block, "has_cross_attention")
+                and upsample_block.has_cross_attention
+            ):
                 sample = upsample_block(
                     hidden_states=sample,
                     temb=emb,
@@ -154,15 +165,19 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 )
             else:
                 sample = upsample_block(
-                    hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
+                    hidden_states=sample,
+                    temb=emb,
+                    res_hidden_states_tuple=res_samples,
+                    upsample_size=upsample_size,
                 )
-            
+
             if i in up_ft_indices:
                 up_ft[i] = sample.detach()
-            
+
         output = {}
-        output['up_ft'] = up_ft
+        output["up_ft"] = up_ft
         return output
+
 
 class OneStepSDPipeline(StableDiffusionPipeline):
     @torch.no_grad()
@@ -172,36 +187,51 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         t,
         up_ft_indices,
         negative_prompt: Optional[Union[str, List[str]]] = None,
-        generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
+        generator: Optional[
+            Union[torch.Generator, List[torch.Generator]]
+        ] = None,
         prompt_embeds: Optional[torch.FloatTensor] = None,
-        callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
+        callback: Optional[
+            Callable[[int, int, torch.FloatTensor], None]
+        ] = None,
         callback_steps: int = 1,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        noise_type: str = 'normal',
+        noise_type: str = "normal",
     ):
-        
+
         device = self._execution_device
-        latents = self.vae.encode(img_tensor).latent_dist.sample() * self.vae.config.scaling_factor
+        latents = (
+            self.vae.encode(img_tensor).latent_dist.sample()
+            * self.vae.config.scaling_factor
+        )
         t = torch.tensor(t, dtype=torch.long, device=device)
-        if noise_type == 'normal':
+        if noise_type == "normal":
             noise = torch.randn_like(latents).to(device)
         else:
             raise NotImplementedError("This noise type is not implemented yet")
         latents_noisy = self.scheduler.add_noise(latents, noise, t)
-        unet_output = self.unet(latents_noisy, 
-                               t,
-                               up_ft_indices,
-                               encoder_hidden_states=prompt_embeds,
-                               cross_attention_kwargs=cross_attention_kwargs)
+        unet_output = self.unet(
+            latents_noisy,
+            t,
+            up_ft_indices,
+            encoder_hidden_states=prompt_embeds,
+            cross_attention_kwargs=cross_attention_kwargs,
+        )
         return unet_output
 
 
 class SDFeaturizer:
-    def __init__(self, sd_id='stabilityai/stable-diffusion-2-1', noise_type='normal'):
+    def __init__(
+        self, sd_id="stabilityai/stable-diffusion-2-1", noise_type="normal"
+    ):
         unet = MyUNet2DConditionModel.from_pretrained(sd_id, subfolder="unet")
-        onestep_pipe = OneStepSDPipeline.from_pretrained(sd_id, unet=unet, safety_checker=None)
+        onestep_pipe = OneStepSDPipeline.from_pretrained(
+            sd_id, unet=unet, safety_checker=None
+        )
         onestep_pipe.vae.decoder = None
-        onestep_pipe.scheduler = DDIMScheduler.from_pretrained(sd_id, subfolder="scheduler")
+        onestep_pipe.scheduler = DDIMScheduler.from_pretrained(
+            sd_id, subfolder="scheduler"
+        )
         gc.collect()
         onestep_pipe = onestep_pipe.to("cuda")
         onestep_pipe.enable_attention_slicing()
@@ -210,13 +240,10 @@ class SDFeaturizer:
         self.noise_type = noise_type
 
     @torch.no_grad()
-    def forward(self, 
-                img_tensor,
-                prompt, 
-                t=261, 
-                up_ft_index=1, 
-                ensemble_size=8):
-        '''
+    def forward(
+        self, img_tensor, prompt, t=261, up_ft_index=1, ensemble_size=8
+    ):
+        """
         Args:
             img_tensor: should be a single torch tensor in the shape of [1, C, H, W] or [C, H, W]
             prompt: the prompt to use, a string
@@ -225,26 +252,30 @@ class SDFeaturizer:
             ensemble_size: the number of repeated images used in the batch to extract features
         Return:
             unet_ft: a torch tensor in the shape of [1, c, h, w]
-        '''
-        img_tensor = img_tensor.repeat(ensemble_size, 1, 1, 1).cuda() # ensem, c, h, w
+        """
+        img_tensor = img_tensor.repeat(
+            ensemble_size, 1, 1, 1
+        ).cuda()  # ensem, c, h, w
         prompt_embeds = self.pipe._encode_prompt(
             prompt=prompt,
-            device='cuda',
+            device="cuda",
             num_images_per_prompt=1,
-            do_classifier_free_guidance=False) # [1, 77, dim]
+            do_classifier_free_guidance=False,
+        )  # [1, 77, dim]
         prompt_embeds = prompt_embeds.repeat(ensemble_size, 1, 1)
         unet_ft_all = self.pipe(
             img_tensor=img_tensor,
             t=t,
             # up_ft_indices=[up_ft_index],
-            up_ft_indices=[0,1,2,3,4,5,6,7], 
+            up_ft_indices=[0, 1, 2, 3, 4, 5, 6, 7],
             prompt_embeds=prompt_embeds,
-            noise_type=self.noise_type)
+            noise_type=self.noise_type,
+        )
         # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
         # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
-        
-        unet_ft = unet_ft_all['up_ft']
+
+        unet_ft = unet_ft_all["up_ft"]
         for key_i in unet_ft.keys():
-            unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True) # 1,c,h,w
+            unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
 
         return unet_ft
