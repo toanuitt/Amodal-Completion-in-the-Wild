@@ -22,7 +22,7 @@ def get_image_tensor(image_path: str, image_size: list):
 
 
 def main(args):
-    dift = SDFeaturizer(args.model_id)
+    dift = SDFeaturizer(sd_id=args.model_id, device=args.device)
     img_path = args.input_path
     save_path = args.output_path
 
@@ -102,6 +102,12 @@ def parse_args():
         "--output-path",
         type=str,
         default="dift.pt",
+        help="path to save the output features as torch tensor",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
         help="path to save the output features as torch tensor",
     )
     args = parser.parse_args()

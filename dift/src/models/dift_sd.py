@@ -222,7 +222,10 @@ class OneStepSDPipeline(StableDiffusionPipeline):
 
 class SDFeaturizer:
     def __init__(
-        self, sd_id="stabilityai/stable-diffusion-2-1", noise_type="normal"
+        self,
+        sd_id="stabilityai/stable-diffusion-2-1",
+        noise_type="normal",
+        device="cuda",
     ):
         unet = MyUNet2DConditionModel.from_pretrained(sd_id, subfolder="unet")
         onestep_pipe = OneStepSDPipeline.from_pretrained(
@@ -233,7 +236,7 @@ class SDFeaturizer:
             sd_id, subfolder="scheduler"
         )
         gc.collect()
-        onestep_pipe = onestep_pipe.to("cuda")
+        onestep_pipe = onestep_pipe.to(device)
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
         self.pipe = onestep_pipe
