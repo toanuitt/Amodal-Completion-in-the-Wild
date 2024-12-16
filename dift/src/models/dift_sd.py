@@ -5,6 +5,7 @@ import torch
 import numpy as np
 from diffusers.models.unet_2d_condition import UNet2DConditionModel
 from diffusers import DDIMScheduler
+from accelerate import PartialState
 
 
 class MyUNet2DConditionModel(UNet2DConditionModel):
@@ -239,8 +240,11 @@ class SDFeaturizer:
         onestep_pipe = onestep_pipe.to(device)
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
-        self.pipe = onestep_pipe
+        distributed_state = PartialState()
+        onestep_pipe.to(distributed_state.device)
+        self.pipeline = onestep_pipe
         self.noise_type = noise_type
+        self.distributed_state = distributed_state
 
     @torch.no_grad()
     def forward(
@@ -259,26 +263,31 @@ class SDFeaturizer:
         img_tensor = img_tensor.repeat(
             ensemble_size, 1, 1, 1
         ).cuda()  # ensem, c, h, w
-        prompt_embeds = self.pipe._encode_prompt(
+        prompt_embeds = self.pipeline._encode_prompt(
             prompt=prompt,
             device="cuda",
             num_images_per_prompt=1,
             do_classifier_free_guidance=False,
         )  # [1, 77, dim]
-        prompt_embeds = prompt_embeds.repeat(ensemble_size, 1, 1)
-        unet_ft_all = self.pipe(
-            img_tensor=img_tensor,
-            t=t,
-            # up_ft_indices=[up_ft_index],
-            up_ft_indices=[0, 1, 2, 3, 4, 5, 6, 7],
-            prompt_embeds=prompt_embeds,
-            noise_type=self.noise_type,
-        )
-        # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
-        # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
 
-        unet_ft = unet_ft_all["up_ft"]
-        for key_i in unet_ft.keys():
-            unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
+        prompt_embeds = prompt_embeds.repeat(ensemble_size, 1, 1)
+
+        with self.distributed_state.split_between_processes(
+            img_tensor
+        ) as img_tensor:
+            unet_ft_all = self.pipeline(
+                img_tensor=img_tensor,
+                t=t,
+                # up_ft_indices=[up_ft_index],
+                up_ft_indices=[0, 1, 2, 3, 4, 5, 6, 7],
+                prompt_embeds=prompt_embeds,
+                noise_type=self.noise_type,
+            )
+            # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
+            # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
+
+            unet_ft = unet_ft_all["up_ft"]
+            for key_i in unet_ft.keys():
+                unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
 
         return unet_ft
