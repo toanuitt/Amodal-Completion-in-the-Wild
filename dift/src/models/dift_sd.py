@@ -158,7 +158,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 sample = upsample_block(
                     hidden_states=sample.cuda(),
                     temb=emb,
-                    res_hidden_states_tuple=res_samples.cuda(),
+                    res_hidden_states_tuple=res_samples,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                     upsample_size=upsample_size,
@@ -168,7 +168,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 sample = upsample_block(
                     hidden_states=sample.cuda(),
                     temb=emb,
-                    res_hidden_states_tuple=res_samples.cuda(),
+                    res_hidden_states_tuple=res_samples,
                     upsample_size=upsample_size,
                 )
 
