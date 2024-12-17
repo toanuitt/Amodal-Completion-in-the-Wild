@@ -294,7 +294,7 @@ class SDFeaturizer:
         # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
         # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
 
-        unet_ft = unet_ft_all["up_ft"]
+        unet_ft = unet_ft_all["up_ft"].copy()
         for key_i in unet_ft.keys():
             unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
 
