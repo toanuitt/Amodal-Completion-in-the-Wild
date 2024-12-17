@@ -136,7 +136,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
         for i, upsample_block in enumerate(self.up_blocks):
 
-            if i > np.max(up_ft_indices):
+            if i > up_ft_indices.max():
                 break
 
             is_final_block = i == len(self.up_blocks) - 1
