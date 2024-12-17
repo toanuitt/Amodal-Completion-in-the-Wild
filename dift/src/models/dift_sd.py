@@ -99,9 +99,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         # 3. down
         up_ft = {}
         down_block_res_samples = (sample,)
-        for i in range(len(self.down_blocks)):
-            downsample_block = self.down_blocks[i]
-            # for downsample_block in self.down_blocks:
+        for i, downsample_block in enumerate(self.down_blocks):
             if (
                 hasattr(downsample_block, "has_cross_attention")
                 and downsample_block.has_cross_attention
@@ -175,6 +173,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
             if i in up_ft_indices:
                 up_ft[i] = sample.detach()
         up_ft = copy.deepcopy(up_ft)
+        print(up_ft)
         del sample
         return up_ft
 
