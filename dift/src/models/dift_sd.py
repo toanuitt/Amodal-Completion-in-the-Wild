@@ -210,7 +210,9 @@ class OneStepSDPipeline(StableDiffusionPipeline):
             noise = torch.randn_like(latents).to(device)
         else:
             raise NotImplementedError("This noise type is not implemented yet")
-        latents_noisy = self.scheduler.add_noise(latents, noise, t)
+        latents_noisy = self.scheduler.add_noise(
+            latents.cuda(), noise.cuda(), t
+        )
         unet_output = self.unet(
             latents_noisy,
             t,
