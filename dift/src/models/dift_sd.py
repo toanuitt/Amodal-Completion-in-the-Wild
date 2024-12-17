@@ -220,9 +220,18 @@ class SDFeaturizer:
     def __init__(
         self, sd_id="stabilityai/stable-diffusion-2-1", noise_type="normal"
     ):
-        unet = MyUNet2DConditionModel.from_pretrained(sd_id, subfolder="unet")
+        unet = MyUNet2DConditionModel.from_pretrained(
+            sd_id,
+            subfolder="unet",
+            device_map="auto",
+            torch_dtype=torch.float16,
+        )
         onestep_pipe = OneStepSDPipeline.from_pretrained(
-            sd_id, unet=unet, safety_checker=None, device_map="auto"
+            sd_id,
+            unet=unet,
+            safety_checker=None,
+            device_map="auto",
+            torch_dtype=torch.float16,
         )
         onestep_pipe.vae.decoder = None
         onestep_pipe.scheduler = DDIMScheduler.from_pretrained(
