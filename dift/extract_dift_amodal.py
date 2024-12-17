@@ -4,6 +4,7 @@ import torch
 from PIL import Image
 from src.models.dift_sd import SDFeaturizer
 from torchvision.transforms import PILToTensor
+from tqdm import tqdm
 
 
 def is_image(file_name: str) -> bool:
@@ -26,7 +27,7 @@ def main(args):
     imgs_path = args.input_path
     save_path = args.output_path
 
-    for img_name in os.listdir(imgs_path):
+    for img_name in tqdm(os.listdir(imgs_path)):
         if not is_image(img_name):
             continue
 
