@@ -174,10 +174,10 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
             if i in up_ft_indices:
                 up_ft[i] = sample.detach()
-
+        print(up_ft)
         output = {}
         output["up_ft"] = up_ft.copy()
-        print(output)
+        print(output.keys())
         del sample
         return output
 
