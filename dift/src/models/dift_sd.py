@@ -214,10 +214,10 @@ class OneStepSDPipeline(StableDiffusionPipeline):
             latents.cuda(), noise.cuda(), t
         )
         unet_output = self.unet(
-            latents_noisy,
+            latents_noisy.cuda(),
             t,
             up_ft_indices,
-            encoder_hidden_states=prompt_embeds,
+            encoder_hidden_states=prompt_embeds.cuda(),
             cross_attention_kwargs=cross_attention_kwargs,
         )
         return unet_output
