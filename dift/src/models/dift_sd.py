@@ -176,7 +176,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 up_ft[i] = sample.detach()
 
         output = {}
-        output["up_ft"] = up_ft
+        output["up_ft"] = up_ft.copy()
 
         del sample
         return output
@@ -244,7 +244,6 @@ class SDFeaturizer:
         onestep_pipe.scheduler = DDIMScheduler.from_pretrained(
             sd_id, subfolder="scheduler", device_map="auto"
         )
-        gc.collect()
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
         self.pipeline = onestep_pipe
