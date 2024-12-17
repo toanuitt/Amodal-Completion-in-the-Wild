@@ -215,8 +215,8 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         )
         unet_output = self.unet(
             latents_noisy.cuda(),
-            t,
-            up_ft_indices,
+            torch.Tensor(t).to("cuda"),
+            torch.Tensor(up_ft_indices).to("cuda"),
             encoder_hidden_states=prompt_embeds.cuda(),
             cross_attention_kwargs=cross_attention_kwargs,
         )
