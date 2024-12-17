@@ -283,7 +283,8 @@ class SDFeaturizer:
             .cuda()
         )
 
-        up_ft_index = up_ft_index.cuda()
+        t = torch.Tensor(t).cuda()
+        up_ft_index = torch.Tensor(up_ft_index).cuda()
 
         unet_ft_all = self.pipeline(
             img_tensor=img_tensor,
@@ -299,6 +300,6 @@ class SDFeaturizer:
         for key_i in unet_ft.keys():
             unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
 
-        del img_tensor, up_ft_index, prompt_embeds
+        del img_tensor, t, up_ft_index, prompt_embeds
         gc.collect()
         return unet_ft
