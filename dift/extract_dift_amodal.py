@@ -23,14 +23,14 @@ def get_image_tensor(image_path: str, image_size: list):
 
 def main(args):
     dift = SDFeaturizer(sd_id=args.model_id, device=args.device)
-    img_path = args.input_path
+    imgs_path = args.input_path
     save_path = args.output_path
 
-    for img_name in os.listdir(img_path):
+    for img_name in os.listdir(imgs_path):
         if not is_image(img_name):
             continue
 
-        img_path = os.path.join(img_path, img_name)
+        img_path = os.path.join(imgs_path, img_name)
         img_tensor = get_image_tensor(img_path, args.img_size)
         ft = dift.forward(
             img_tensor,
