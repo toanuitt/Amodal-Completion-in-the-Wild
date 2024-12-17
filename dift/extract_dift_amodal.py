@@ -85,8 +85,8 @@ def main(args):
     imgs_path = args.input_path
     save_path = args.output_path
 
-    # for img_name in tqdm(os.listdir(imgs_path)):
-    for img_name in os.listdir(imgs_path):
+    for img_name in tqdm(os.listdir(imgs_path)):
+        # for img_name in os.listdir(imgs_path):
         if not is_image(img_name):
             continue
 
