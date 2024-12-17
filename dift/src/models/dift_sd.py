@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from diffusers.models.unet_2d_condition import UNet2DConditionModel
 from diffusers import DDIMScheduler
-from accelerate import PartialState
+import copy
 
 
 class MyUNet2DConditionModel(UNet2DConditionModel):
@@ -130,7 +130,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 encoder_hidden_states=encoder_hidden_states,
                 attention_mask=attention_mask,
                 cross_attention_kwargs=cross_attention_kwargs,
-            ).cuda()
+            )
 
         # 5. up
 
@@ -174,12 +174,9 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
             if i in up_ft_indices:
                 up_ft[i] = sample.detach()
-        print(up_ft)
-        output = {}
-        output["up_ft"] = up_ft.copy()
-        print(output.keys())
+        up_ft = copy.deepcopy(up_ft)
         del sample
-        return output
+        return up_ft
 
 
 class OneStepSDPipeline(StableDiffusionPipeline):
@@ -271,7 +268,6 @@ class SDFeaturizer:
         img_tensor = img_tensor.repeat(
             ensemble_size, 1, 1, 1
         ).cuda()  # ensem, c, h, w
-        print(img_tensor)
         prompt_embeds = (
             self.pipeline._encode_prompt(
                 prompt=prompt,
@@ -292,13 +288,10 @@ class SDFeaturizer:
             prompt_embeds=prompt_embeds,
             noise_type=self.noise_type,
         )
-        # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
-        # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
 
-        unet_ft = unet_ft_all["up_ft"].copy()
-        for key_i in unet_ft.keys():
-            unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
+        for key_i in unet_ft_all.keys():
+            unet_ft_all[key_i] = unet_ft_all[key_i].mean(0, keepdim=True)
 
         del img_tensor, t, up_ft_index, prompt_embeds
         gc.collect()
-        return unet_ft
+        return unet_ft_all
