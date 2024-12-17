@@ -97,7 +97,6 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         sample = self.conv_in(sample)
 
         # 3. down
-        up_ft = {}
         down_block_res_samples = (sample,)
         for i, downsample_block in enumerate(self.down_blocks):
             if (
@@ -117,8 +116,9 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 )
 
             down_block_res_samples += res_samples
-            if i + 4 in up_ft_indices:
-                up_ft[i + 4] = sample.detach()
+
+            # if i + 4 in up_ft_indices:
+            #     up_ft[i + 4] = sample.detach()
 
         # 4. mid
         if self.mid_block is not None:
@@ -131,10 +131,10 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
             ).cuda()
 
         # 5. up
-
+        up_ft = {}
         for i, upsample_block in enumerate(self.up_blocks):
 
-            if i > up_ft_indices.max():
+            if i > max(up_ft_indices):
                 break
 
             is_final_block = i == len(self.up_blocks) - 1
@@ -172,6 +172,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
             if i in up_ft_indices:
                 up_ft[i] = sample.detach()
+
         up_ft = copy.deepcopy(up_ft)
         print(up_ft)
         del sample
@@ -251,7 +252,7 @@ class SDFeaturizer:
         img_tensor,
         prompt,
         t=261,
-        up_ft_index=[0, 1, 2, 3, 4, 5, 6, 7],
+        up_ft_indices=[0, 1, 2, 3],
         ensemble_size=8,
     ):
         """
@@ -267,6 +268,7 @@ class SDFeaturizer:
         img_tensor = img_tensor.repeat(
             ensemble_size, 1, 1, 1
         ).cuda()  # ensem, c, h, w
+
         prompt_embeds = (
             self.pipeline._encode_prompt(
                 prompt=prompt,
@@ -278,12 +280,10 @@ class SDFeaturizer:
             .cuda()
         )
 
-        up_ft_index = torch.Tensor(up_ft_index).cuda()
-
         unet_ft_all = self.pipeline(
             img_tensor=img_tensor,
             t=t,
-            up_ft_indices=up_ft_index,
+            up_ft_indices=up_ft_indices,
             prompt_embeds=prompt_embeds,
             noise_type=self.noise_type,
         )
@@ -291,6 +291,6 @@ class SDFeaturizer:
         for key_i in unet_ft_all.keys():
             unet_ft_all[key_i] = unet_ft_all[key_i].mean(0, keepdim=True)
 
-        del img_tensor, t, up_ft_index, prompt_embeds
+        del img_tensor, t, prompt_embeds
         gc.collect()
         return unet_ft_all

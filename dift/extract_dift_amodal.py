@@ -38,7 +38,7 @@ def main(args):
             img_tensor,
             prompt=args.prompt,
             t=args.t,
-            up_ft_index=args.up_ft_index,
+            up_ft_indices=args.up_ft_index,
             ensemble_size=args.ensemble_size,
         )
 
