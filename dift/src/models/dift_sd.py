@@ -241,7 +241,6 @@ class SDFeaturizer:
             sd_id, subfolder="scheduler", device_map="auto"
         )
         gc.collect()
-        # onestep_pipe = onestep_pipe.to(device)
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
         self.pipeline = onestep_pipe
@@ -283,7 +282,7 @@ class SDFeaturizer:
         )
         # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
         # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
-
+        gc.collect()
         unet_ft = unet_ft_all["up_ft"]
         for key_i in unet_ft.keys():
             unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
