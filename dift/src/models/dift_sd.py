@@ -130,7 +130,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 encoder_hidden_states=encoder_hidden_states,
                 attention_mask=attention_mask,
                 cross_attention_kwargs=cross_attention_kwargs,
-            )
+            ).cuda()
 
         # 5. up
 
@@ -156,7 +156,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 and upsample_block.has_cross_attention
             ):
                 sample = upsample_block(
-                    hidden_states=sample.cuda(),
+                    hidden_states=sample,
                     temb=emb,
                     res_hidden_states_tuple=res_samples,
                     encoder_hidden_states=encoder_hidden_states,
@@ -166,7 +166,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 )
             else:
                 sample = upsample_block(
-                    hidden_states=sample.cuda(),
+                    hidden_states=sample,
                     temb=emb,
                     res_hidden_states_tuple=res_samples,
                     upsample_size=upsample_size,
@@ -177,6 +177,8 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
         output = {}
         output["up_ft"] = up_ft
+
+        del sample
         return output
 
 
@@ -215,11 +217,13 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         )
         unet_output = self.unet(
             latents_noisy.cuda(),
-            torch.Tensor(t).to("cuda"),
-            torch.Tensor(up_ft_indices).to("cuda"),
-            encoder_hidden_states=prompt_embeds.cuda(),
+            t,
+            up_ft_indices,
+            encoder_hidden_states=prompt_embeds,
             cross_attention_kwargs=cross_attention_kwargs,
         )
+
+        del latents, noise, latents_noisy
         return unet_output
 
 
@@ -248,7 +252,12 @@ class SDFeaturizer:
 
     @torch.no_grad()
     def forward(
-        self, img_tensor, prompt, t=261, up_ft_index=1, ensemble_size=8
+        self,
+        img_tensor,
+        prompt,
+        t=261,
+        up_ft_index=[0, 1, 2, 3, 4, 5, 6, 7],
+        ensemble_size=8,
     ):
         """
         Args:
@@ -263,28 +272,33 @@ class SDFeaturizer:
         img_tensor = img_tensor.repeat(
             ensemble_size, 1, 1, 1
         ).cuda()  # ensem, c, h, w
-        prompt_embeds = self.pipeline._encode_prompt(
-            prompt=prompt,
-            device="cuda",
-            num_images_per_prompt=1,
-            do_classifier_free_guidance=False,
-        )  # [1, 77, dim]
+        prompt_embeds = (
+            self.pipeline._encode_prompt(
+                prompt=prompt,
+                device="cuda",
+                num_images_per_prompt=1,
+                do_classifier_free_guidance=False,
+            )
+            .repeat(ensemble_size, 1, 1)
+            .cuda()
+        )
 
-        prompt_embeds = prompt_embeds.repeat(ensemble_size, 1, 1)
+        up_ft_index = up_ft_index.cuda()
 
         unet_ft_all = self.pipeline(
             img_tensor=img_tensor,
             t=t,
-            # up_ft_indices=[up_ft_index],
-            up_ft_indices=[0, 1, 2, 3, 4, 5, 6, 7],
+            up_ft_indices=up_ft_index,
             prompt_embeds=prompt_embeds,
             noise_type=self.noise_type,
         )
         # unet_ft = unet_ft_all['up_ft'][up_ft_index] # ensem, c, h, w
         # unet_ft = unet_ft.mean(0, keepdim=True) # 1,c,h,w
-        gc.collect()
+
         unet_ft = unet_ft_all["up_ft"]
         for key_i in unet_ft.keys():
             unet_ft[key_i] = unet_ft[key_i].mean(0, keepdim=True)  # 1,c,h,w
 
+        del img_tensor, up_ft_index, prompt_embeds
+        gc.collect()
         return unet_ft
