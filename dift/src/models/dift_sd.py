@@ -128,7 +128,6 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
             ).cuda()
 
         # 5. up
-        up_ft = {}
         for i, upsample_block in enumerate(self.up_blocks):
             is_final_block = i == len(self.up_blocks) - 1
 
@@ -164,7 +163,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 )
 
             if i == up_ft_index:
-                up_ft[i] = sample.detach()
+                up_ft = sample.detach()
                 break
 
         up_ft = copy.deepcopy(up_ft)
@@ -214,8 +213,8 @@ class OneStepSDPipeline(StableDiffusionPipeline):
             cross_attention_kwargs=cross_attention_kwargs,
         )
 
-        del t, latents, noise, latents_noisy
-        return unet_output.copy()
+        del latents, noise, latents_noisy
+        return unet_output.cpu()
 
 
 class SDFeaturizer:
@@ -271,7 +270,7 @@ class SDFeaturizer:
             .cuda()
         )
 
-        unet_ft_all = self.pipeline(
+        unet_ft = self.pipeline(
             img_tensor=img_tensor,
             t=t,
             up_ft_index=up_ft_index,
@@ -279,9 +278,8 @@ class SDFeaturizer:
             noise_type=self.noise_type,
         )
 
-        for key_i in unet_ft_all.keys():
-            unet_ft_all[key_i] = unet_ft_all[key_i].mean(0, keepdim=True)
+        unet_ft = unet_ft.mean(0, keepdim=True)
 
         del img_tensor, t, prompt_embeds
         gc.collect()
-        return unet_ft_all
+        return unet_ft
