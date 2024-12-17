@@ -223,7 +223,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
             cross_attention_kwargs=cross_attention_kwargs,
         )
 
-        del latents, noise, latents_noisy
+        del t, latents, noise, latents_noisy
         return unet_output
 
 
@@ -283,7 +283,6 @@ class SDFeaturizer:
             .cuda()
         )
 
-        t = torch.Tensor(t).cuda()
         up_ft_index = torch.Tensor(up_ft_index).cuda()
 
         unet_ft_all = self.pipeline(
