@@ -271,6 +271,7 @@ class SDFeaturizer:
         img_tensor = img_tensor.repeat(
             ensemble_size, 1, 1, 1
         ).cuda()  # ensem, c, h, w
+        print(img_tensor)
         prompt_embeds = (
             self.pipeline._encode_prompt(
                 prompt=prompt,
