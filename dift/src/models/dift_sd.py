@@ -13,7 +13,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         self,
         sample: torch.FloatTensor,
         timestep: Union[torch.Tensor, float, int],
-        up_ft_indices,
+        up_ft_index,
         encoder_hidden_states: torch.Tensor,
         class_labels: Optional[torch.Tensor] = None,
         timestep_cond: Optional[torch.Tensor] = None,
@@ -117,9 +117,6 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
             down_block_res_samples += res_samples
 
-            # if i + 4 in up_ft_indices:
-            #     up_ft[i + 4] = sample.detach()
-
         # 4. mid
         if self.mid_block is not None:
             sample = self.mid_block(
@@ -133,10 +130,6 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         # 5. up
         up_ft = {}
         for i, upsample_block in enumerate(self.up_blocks):
-
-            if i > max(up_ft_indices):
-                break
-
             is_final_block = i == len(self.up_blocks) - 1
 
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
@@ -170,8 +163,9 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                     upsample_size=upsample_size,
                 )
 
-            if i in up_ft_indices:
+            if i == up_ft_index:
                 up_ft[i] = sample.detach()
+                break
 
         up_ft = copy.deepcopy(up_ft)
         print(up_ft)
@@ -184,8 +178,8 @@ class OneStepSDPipeline(StableDiffusionPipeline):
     def __call__(
         self,
         img_tensor,
-        t,
-        up_ft_indices,
+        t: int,
+        up_ft_index: int,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         generator: Optional[
             Union[torch.Generator, List[torch.Generator]]
@@ -215,7 +209,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         unet_output = self.unet(
             latents_noisy.cuda(),
             t,
-            up_ft_indices,
+            up_ft_index,
             encoder_hidden_states=prompt_embeds,
             cross_attention_kwargs=cross_attention_kwargs,
         )
@@ -226,10 +220,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
 
 class SDFeaturizer:
     def __init__(
-        self,
-        sd_id="stabilityai/stable-diffusion-2-1",
-        noise_type="normal",
-        device="cuda",
+        self, sd_id="stabilityai/stable-diffusion-2-1", noise_type="normal"
     ):
         unet = MyUNet2DConditionModel.from_pretrained(
             sd_id, subfolder="unet", device_map="auto"
@@ -252,7 +243,7 @@ class SDFeaturizer:
         img_tensor,
         prompt,
         t=261,
-        up_ft_indices=[0, 1, 2, 3],
+        up_ft_index=0,
         ensemble_size=8,
     ):
         """
@@ -283,7 +274,7 @@ class SDFeaturizer:
         unet_ft_all = self.pipeline(
             img_tensor=img_tensor,
             t=t,
-            up_ft_indices=up_ft_indices,
+            up_ft_index=up_ft_index,
             prompt_embeds=prompt_embeds,
             noise_type=self.noise_type,
         )

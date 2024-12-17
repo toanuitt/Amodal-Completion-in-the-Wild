@@ -23,7 +23,7 @@ def get_image_tensor(image_path: str, image_size: list):
 
 
 def main(args):
-    dift = SDFeaturizer(sd_id=args.model_id, device=args.device)
+    dift = SDFeaturizer(sd_id=args.model_id)
     imgs_path = args.input_path
     save_path = args.output_path
 
@@ -38,7 +38,7 @@ def main(args):
             img_tensor,
             prompt=args.prompt,
             t=args.t,
-            up_ft_indices=args.up_ft_index,
+            up_ft_index=args.up_ft_index,
             ensemble_size=args.ensemble_size,
         )
 
@@ -107,12 +107,6 @@ def parse_args():
         "--output-path",
         type=str,
         default="dift.pt",
-        help="path to save the output features as torch tensor",
-    )
-    parser.add_argument(
-        "--device",
-        type=str,
-        default="cuda",
         help="path to save the output features as torch tensor",
     )
     args = parser.parse_args()
