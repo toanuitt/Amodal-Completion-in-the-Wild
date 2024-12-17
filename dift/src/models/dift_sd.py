@@ -130,7 +130,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 encoder_hidden_states=encoder_hidden_states,
                 attention_mask=attention_mask,
                 cross_attention_kwargs=cross_attention_kwargs,
-            )
+            ).cuda()
 
         # 5. up
 
