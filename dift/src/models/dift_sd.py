@@ -220,15 +220,13 @@ class SDFeaturizer:
     def __init__(
         self, sd_id="stabilityai/stable-diffusion-2-1", noise_type="normal"
     ):
-        unet = MyUNet2DConditionModel.from_pretrained(
-            sd_id, subfolder="unet", device_map="auto"
-        )
+        unet = MyUNet2DConditionModel.from_pretrained(sd_id, subfolder="unet")
         onestep_pipe = OneStepSDPipeline.from_pretrained(
             sd_id, unet=unet, safety_checker=None, device_map="auto"
         )
         onestep_pipe.vae.decoder = None
         onestep_pipe.scheduler = DDIMScheduler.from_pretrained(
-            sd_id, subfolder="scheduler", device_map="auto"
+            sd_id, subfolder="scheduler"
         )
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
