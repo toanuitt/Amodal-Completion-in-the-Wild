@@ -239,7 +239,7 @@ class SDFeaturizer:
             sd_id, subfolder="scheduler", device_map="auto"
         )
         gc.collect()
-        onestep_pipe = onestep_pipe.to(device)
+        # onestep_pipe = onestep_pipe.to(device)
         onestep_pipe.enable_attention_slicing()
         onestep_pipe.enable_xformers_memory_efficient_attention()
         self.pipeline = onestep_pipe
