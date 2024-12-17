@@ -43,7 +43,7 @@ def main(args):
         )
 
         print(f"{img_name=}")
-        print(f"{ft}")
+        # print(f"{ft}")
 
         for key_i in ft.keys():
             cur_folder = os.path.join(

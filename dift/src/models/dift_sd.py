@@ -177,7 +177,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
 
         output = {}
         output["up_ft"] = up_ft.copy()
-
+        print(output)
         del sample
         return output
 
