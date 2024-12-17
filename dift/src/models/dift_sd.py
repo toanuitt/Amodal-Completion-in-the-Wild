@@ -167,7 +167,6 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                 break
 
         up_ft = copy.deepcopy(up_ft)
-        print(up_ft)
         del sample
         return up_ft
 

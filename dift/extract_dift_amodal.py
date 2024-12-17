@@ -100,7 +100,7 @@ def main(args):
             ensemble_size=args.ensemble_size,
         )
 
-        print(f"{img_name=}")
+        # print(f"{img_name=}")
         # print(f"{ft}")
 
         cur_folder = os.path.join(
