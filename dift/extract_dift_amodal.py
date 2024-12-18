@@ -34,13 +34,6 @@ def parse_args():
         help="time step for diffusion, choose from range [0, 1000]",
     )
     parser.add_argument(
-        "--up-ft-index",
-        default=1,
-        type=int,
-        choices=[0, 1, 2, 3],
-        help="which upsampling block of U-Net to extract the feature map",
-    )
-    parser.add_argument(
         "--prompt",
         default="",
         type=str,
@@ -60,6 +53,18 @@ def parse_args():
         type=str,
         default="dift.pt",
         help="path to save the output features as torch tensor",
+    )
+    parser.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help="the first index of first image to take feature",
+    )
+    parser.add_argument(
+        "--no-image",
+        type=int,
+        default=1,
+        help="the number of images to take feature",
     )
     args = parser.parse_args()
     return args
@@ -82,31 +87,40 @@ def get_image_tensor(image_path: str, image_size: list):
 
 def main(args):
     dift = SDFeaturizer(sd_id=args.model_id)
+    up_ft_indices = [0, 1, 2, 3]
     imgs_path = args.input_path
     save_path = args.output_path
+    start_index = args.start_index
+    end_index = start_index + args.no_image
+    img_names = [
+        img_name for img_name in os.listdir(imgs_path) if is_image(img_name)
+    ]
 
-    for img_name in tqdm(os.listdir(imgs_path)):
-        # for img_name in os.listdir(imgs_path):
-        if not is_image(img_name):
-            continue
+    if end_index >= len(img_names):
+        end_index = len(img_names)
 
+    chosen_img_names = img_names[start_index : end_index + 1]
+
+    for img_name in tqdm(chosen_img_names):
         img_path = os.path.join(imgs_path, img_name)
         img_tensor = get_image_tensor(img_path, args.img_size)
-        ft = dift.forward(
-            img_tensor,
+        fts = dift.forward(
+            img_tensor=img_tensor,
             prompt=args.prompt,
             t=args.t,
-            up_ft_index=args.up_ft_index,
+            up_ft_indices=up_ft_indices,
             ensemble_size=args.ensemble_size,
         )
 
-        cur_folder = os.path.join(
-            save_path, "t_" + str(args.t) + "_index_" + str(args.up_ft_index)
-        )
-        if not os.path.exists(cur_folder):
-            os.makedirs(cur_folder)
-        tensor_file_name = os.path.join(cur_folder, img_name[:-4] + ".pt")
-        torch.save(ft.squeeze(0).cpu(), tensor_file_name)
+        for key, value in fts.items():
+            cur_folder = os.path.join(
+                save_path, "t_" + str(args.t) + "_index_" + str(key)
+            )
+            if not os.path.exists(cur_folder):
+                os.makedirs(cur_folder)
+
+            tensor_file_name = os.path.join(cur_folder, img_name[:-4] + ".pt")
+            torch.save(value.squeeze(0).cpu(), tensor_file_name)
 
 
 if __name__ == "__main__":

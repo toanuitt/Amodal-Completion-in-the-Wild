@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import cv2
 
@@ -395,9 +396,6 @@ def infer_amodal_aw_sdm(
     num = inmodal.shape[0]
     inmodal_patches = []
     amodal_patches = []
-
-    import torch.nn as nn
-    import os
 
     org_src_ft_dict = {}
     for layer_i in [0, 1, 2, 3]:

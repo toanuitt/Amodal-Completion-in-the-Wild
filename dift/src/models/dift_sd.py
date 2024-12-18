@@ -13,7 +13,7 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
         self,
         sample: torch.FloatTensor,
         timestep: Union[torch.Tensor, float, int],
-        up_ft_index,
+        up_ft_indices: list,
         encoder_hidden_states: torch.Tensor,
         class_labels: Optional[torch.Tensor] = None,
         timestep_cond: Optional[torch.Tensor] = None,
@@ -128,7 +128,11 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
             ).cuda()
 
         # 5. up
+        up_fts = {}
         for i, upsample_block in enumerate(self.up_blocks):
+            if i > max(up_ft_indices):
+                break
+
             is_final_block = i == len(self.up_blocks) - 1
 
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
@@ -162,13 +166,11 @@ class MyUNet2DConditionModel(UNet2DConditionModel):
                     upsample_size=upsample_size,
                 )
 
-            if i == up_ft_index:
-                up_ft = sample.detach()
-                break
+            up_fts[i] = sample.detach()
 
-        up_ft = copy.deepcopy(up_ft)
+        up_fts = copy.deepcopy(up_fts)
         del sample
-        return up_ft
+        return up_fts
 
 
 class OneStepSDPipeline(StableDiffusionPipeline):
@@ -177,7 +179,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         self,
         img_tensor,
         t: int,
-        up_ft_index: int,
+        up_ft_indices: list,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         generator: Optional[
             Union[torch.Generator, List[torch.Generator]]
@@ -207,7 +209,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         unet_output = self.unet(
             latents_noisy.cuda(),
             t,
-            up_ft_index,
+            up_ft_indices,
             encoder_hidden_states=prompt_embeds,
             cross_attention_kwargs=cross_attention_kwargs,
         )
@@ -247,8 +249,8 @@ class SDFeaturizer:
         self,
         img_tensor,
         prompt,
+        up_ft_indices,
         t=261,
-        up_ft_index=0,
         ensemble_size=8,
     ):
         """
@@ -276,16 +278,17 @@ class SDFeaturizer:
             .cuda()
         )
 
-        unet_ft = self.pipeline(
+        unet_fts = self.pipeline(
             img_tensor=img_tensor,
             t=t,
-            up_ft_index=up_ft_index,
+            up_ft_indices=up_ft_indices,
             prompt_embeds=prompt_embeds,
             noise_type=self.noise_type,
         )
 
-        unet_ft = unet_ft.mean(0, keepdim=True)
+        for key in unet_fts.keys():
+            unet_fts[key] = unet_fts[key].mean(0, keepdim=True)
 
         del img_tensor, t, prompt_embeds
         gc.collect()
-        return unet_ft
+        return unet_fts
