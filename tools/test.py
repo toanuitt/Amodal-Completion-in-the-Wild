@@ -82,6 +82,7 @@ class Tester(object):
         )
         self.model.load_state(self.args.load_model)
         self.model.switch_to("eval")
+        self.model = self.model.half()
 
     def expand_bbox(self, bboxes):
         new_bboxes = []
@@ -141,7 +142,6 @@ class Tester(object):
         print(self.data_length)
 
         for i in range(0, self.data_length):
-            print(i)
             if self.args.dataset_format == "COCOA":
                 modal, category, bboxes, amodal_gt, image_fn, _ = (
                     self.data_reader.get_image_instances(
