@@ -82,7 +82,6 @@ class Tester(object):
         )
         self.model.load_state(self.args.load_model)
         self.model.switch_to("eval")
-        self.model = self.model.half()
 
     def expand_bbox(self, bboxes):
         new_bboxes = []

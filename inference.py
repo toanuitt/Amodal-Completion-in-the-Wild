@@ -402,7 +402,7 @@ def infer_amodal_aw_sdm(
     for layer_i in [0, 1, 2, 3]:
         feat_dir = feature_dirs + str(layer_i)
         feat = torch.load(os.path.join(feat_dir, image_fn[:-4] + ".pt"))
-        org_src_ft = feat.permute(1, 2, 0).numpy()  # h x w x L
+        org_src_ft = feat.permute(1, 2, 0).float().numpy()  # h x w x L
         org_src_ft_dict[layer_i] = org_src_ft
     org_h, org_w = inmodal[0].shape[0], inmodal[0].shape[1]
 
