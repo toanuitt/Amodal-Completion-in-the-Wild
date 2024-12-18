@@ -381,6 +381,7 @@ def infer_instseg(
 
 def infer_amodal_aw_sdm(
     model,
+    feature_dirs,
     image_fn,
     inmodal,
     category,
@@ -399,7 +400,7 @@ def infer_amodal_aw_sdm(
 
     org_src_ft_dict = {}
     for layer_i in [0, 1, 2, 3]:
-        feat_dir = "pth" + str(layer_i)
+        feat_dir = feature_dirs + str(layer_i)
         feat = torch.load(os.path.join(feat_dir, image_fn[:-4] + ".pt"))
         org_src_ft = feat.permute(1, 2, 0).numpy()  # h x w x L
         org_src_ft_dict[layer_i] = org_src_ft

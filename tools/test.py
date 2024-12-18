@@ -38,6 +38,7 @@ def parse_args():
     parser.add_argument("--test-num", default=-1, type=int)
     parser.add_argument("--output", default=None, type=str)
     parser.add_argument("--dilate_kernel", default=0, type=int)
+    parser.add_argument("--feature-dirs", required=True, type=str)
     args = parser.parse_args()
     return args
 
@@ -176,6 +177,7 @@ class Tester(object):
             if self.args.amodal_method == "aw_sdm5":  # supervised
                 amodal_patches_pred = infer.infer_amodal_aw_sdm(
                     self.model,
+                    self.args.feature_dirs,
                     image_fn,
                     modal,
                     category,
