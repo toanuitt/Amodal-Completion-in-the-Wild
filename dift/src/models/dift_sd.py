@@ -215,7 +215,7 @@ class OneStepSDPipeline(StableDiffusionPipeline):
         )
 
         del latents, noise, latents_noisy
-        return unet_output.cpu()
+        return unet_output
 
 
 class SDFeaturizer:
