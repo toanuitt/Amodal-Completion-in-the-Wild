@@ -126,7 +126,7 @@ class Tester(object):
                 self.args.feature_dirs, image_name
             )
 
-            amodal_patches_pred = infer.infer_amodal(
+            amodal_patch_pred = infer.infer_amodal(
                 model=self.model,
                 org_src_ft_dict=org_src_ft_dict,
                 modal=modal,
@@ -137,9 +137,9 @@ class Tester(object):
                 min_input_size=16,
                 interp="nearest",
             )
-            amodal_pred = infer.patch_to_fullimage(
-                patches=amodal_patches_pred,
-                bboxes=bbox,
+            amodal_pred = infer.recover_mask(
+                mask=amodal_patch_pred,
+                bbox=bbox,
                 height=h,
                 width=w,
                 interp="linear",

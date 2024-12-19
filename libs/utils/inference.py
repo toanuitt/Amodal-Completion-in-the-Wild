@@ -493,9 +493,6 @@ def infer_amodal(
     min_input_size=16,
     interp="nearest",
 ):
-    inmodal_patches = []
-    amodal_patches = []
-
     org_h, org_w = modal.shape[0], modal.shape[1]
 
     src_ft_dict = {}
@@ -560,17 +557,14 @@ def infer_amodal(
     if newsize is not None:
         inmodal_patch = resize_mask(inmodal_patch, newsize, interp)
 
-    inmodal_patches.append(inmodal_patch)
-    amodal_patches.append(
-        net_forward_aw_sdm(
-            model=model,
-            image=src_ft_dict,
-            inmodal_patch=inmodal_patch * category,
-            use_rgb=use_rgb,
-        )
+    amodal_patch = net_forward_aw_sdm(
+        model=model,
+        image=src_ft_dict,
+        inmodal_patch=inmodal_patch * category,
+        use_rgb=use_rgb,
     )
 
-    return amodal_patches
+    return amodal_patch
 
 
 def patch_to_fullimage(patches, bboxes, height, width, interp):
