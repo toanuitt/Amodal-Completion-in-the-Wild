@@ -5,7 +5,8 @@ import numpy as np
 from PIL import Image
 import sys
 
-# from tqdm import tqdm
+from tqdm import tqdm
+
 # import torch
 import torchvision.transforms as transforms
 
@@ -79,6 +80,9 @@ class Tester(object):
         self.infer()
 
     def infer(self):
+        if not os.path.exists(self.args.output_root):
+            os.makedirs(self.args.output_root)
+
         self.args.img_transform = transforms.Compose(
             [
                 transforms.ToTensor(),
@@ -88,7 +92,7 @@ class Tester(object):
             ]
         )
 
-        for image_name in os.listdir(self.args.image_root):
+        for image_name in tqdm(os.listdir(self.args.image_root)):
             if "mask" in image_name:
                 continue
 
@@ -135,7 +139,7 @@ class Tester(object):
                 interp="linear",
             )
 
-            amodal_mask = Image.fromarray(amodal_mask).convert("RGB")
+            amodal_mask = Image.fromarray(amodal_pred).convert("RGB")
             amodal_name = f"{image_name.split('.')[0]}_amodal_mask.jpg"
             amodal_mask_path = os.path.join(self.args.output_root, amodal_name)
             amodal_mask.save(amodal_mask_path)
