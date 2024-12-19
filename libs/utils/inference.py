@@ -74,7 +74,7 @@ def net_forward_aw_sdm(
     return result
 
 
-def recover_mask(mask, bbox, h, w, interp):
+def recover_mask(mask, bbox, height, width, interp):
     size = bbox[2]
     if interp == "linear":
         mask = (
@@ -88,7 +88,7 @@ def recover_mask(mask, bbox, h, w, interp):
     else:
         mask = cv2.resize(mask, (size, size), interpolation=cv2.INTER_NEAREST)
     woff, hoff = bbox[0], bbox[1]
-    newbbox = [-woff, -hoff, w, h]
+    newbbox = [-woff, -hoff, width, height]
     return utils.crop_padding(mask, newbbox, pad_value=(0,))
 
 
