@@ -104,8 +104,8 @@ class Tester(object):
 
             image = Image.open(image_path).convert("RGB")
             if (
-                image.size[0] != modal.shape[2]
-                or image.size[1] != modal.shape[1]
+                image.size[0] != modal.shape[1]
+                or image.size[1] != modal.shape[0]
             ):
                 image = image.resize((modal.shape[2], modal.shape[1]))
 
