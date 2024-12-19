@@ -57,14 +57,16 @@ class Tester(object):
         self.model.load_state(self.args.model_path)
         self.model.switch_to("eval")
 
-    def expand_bbox(self, bbox):
+    def expand_bbox(self, bbox, height, width):
         centerx = bbox[0] + bbox[2] / 2.0
         centery = bbox[1] + bbox[3] / 2.0
+        x_limit = bbox[2] * 1.1 if (bbox[2] * 1.1) < width else width
+        y_limit = bbox[3] * 1.1 if (bbox[3] * 1.1) < height else height
         size = max(
             [
                 np.sqrt(bbox[2] * bbox[3] * self.args.data["enlarge_box"]),
-                bbox[2] * 1.1,
-                bbox[3] * 1.1,
+                x_limit,
+                y_limit,
             ]
         )
         new_bbox = [
@@ -108,12 +110,13 @@ class Tester(object):
             modal = np.array(modal)
 
             bbox = mask_to_bbox(modal)
-            bbox = self.expand_bbox(bbox)
             print(bbox)
             image = Image.open(image_path).convert("RGB")
 
             image = np.array(image)
             h, w = image.shape[:2]
+
+            bbox = self.expand_bbox(bbox, h, w)
 
             org_src_ft_dict = infer.get_feature_from_save(
                 self.args.feature_dirs, image_name
