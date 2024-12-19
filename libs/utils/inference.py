@@ -553,7 +553,7 @@ def infer_amodal(
 
     if input_size is not None:
         newsize = input_size
-    elif min_input_size > bbox[i, 2]:
+    elif min_input_size > bbox[2]:
         newsize = min_input_size
     else:
         newsize = None
@@ -565,7 +565,7 @@ def infer_amodal(
         net_forward_aw_sdm(
             model=model,
             image=src_ft_dict,
-            inmodal_patch=inmodal_patch * category[i],
+            inmodal_patch=inmodal_patch * category,
             use_rgb=use_rgb,
         )
     )
