@@ -103,11 +103,11 @@ class Tester(object):
             bbox = mask_to_bbox(modal)
 
             image = Image.open(image_path).convert("RGB")
-            if (
-                image.size[0] != modal.shape[1]
-                or image.size[1] != modal.shape[0]
-            ):
-                image = image.resize((modal.shape[2], modal.shape[1]))
+            # if (
+            #     image.size[0] != modal.shape[1]
+            #     or image.size[1] != modal.shape[0]
+            # ):
+            #     image = image.resize((modal.shape[1], modal.shape[1]))
 
             image = np.array(image)
             h, w = image.shape[:2]
