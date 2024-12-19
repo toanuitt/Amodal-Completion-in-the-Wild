@@ -476,7 +476,7 @@ def get_feature_from_save(feature_dirs, image_name):
     for layer_i in [0, 1, 2, 3]:
         feat_dir = feature_dirs + str(layer_i)
         feat = torch.load(os.path.join(feat_dir, image_name[:-4] + ".pt"))
-        org_src_ft = feat.permute(1, 2, 0).float.numpy()  # h x w x L
+        org_src_ft = feat.permute(1, 2, 0).float().numpy()  # h x w x L
         org_src_ft_dict[layer_i] = org_src_ft
 
     return org_src_ft_dict
