@@ -56,26 +56,23 @@ class Tester(object):
         self.model.load_state(self.args.load_model)
         self.model.switch_to("eval")
 
-    def expand_bbox(self, bboxes):
-        new_bboxes = []
-        for bbox in bboxes:
-            centerx = bbox[0] + bbox[2] / 2.0
-            centery = bbox[1] + bbox[3] / 2.0
-            size = max(
-                [
-                    np.sqrt(bbox[2] * bbox[3] * self.args.data["enlarge_box"]),
-                    bbox[2] * 1.1,
-                    bbox[3] * 1.1,
-                ]
-            )
-            new_bbox = [
-                int(centerx - size / 2.0),
-                int(centery - size / 2.0),
-                int(size),
-                int(size),
+    def expand_bbox(self, bbox):
+        centerx = bbox[0] + bbox[2] / 2.0
+        centery = bbox[1] + bbox[3] / 2.0
+        size = max(
+            [
+                np.sqrt(bbox[2] * bbox[3] * self.args.data["enlarge_box"]),
+                bbox[2] * 1.1,
+                bbox[3] * 1.1,
             ]
-            new_bboxes.append(new_bbox)
-        return np.array(new_bboxes)
+        )
+        new_bbox = [
+            int(centerx - size / 2.0),
+            int(centery - size / 2.0),
+            int(size),
+            int(size),
+        ]
+        return np.array(new_bbox)
 
     def run(self):
         # self.prepare_model()
