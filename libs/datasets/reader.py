@@ -6,8 +6,6 @@ sys.path.append(".")
 import cvbase as cvb
 import pycocotools.mask as maskUtils
 from libs.utils import mask_to_bbox
-# import mmcv
-import ipdb
 
 
 def read_COCOA(ann, h, w, load_occ_label=False):
@@ -153,17 +151,6 @@ class COCOADataset(object):
             )
 
 
-def read_MP3D(ann, h, w, load_occ_label=False):
-    assert "visible_mask" in ann.keys()  # must occluded
-    m_rle = [ann["visible_mask"]]
-    modal = maskUtils.decode(m_rle).squeeze()
-    a_rle = [ann["segmentation"]]
-    amodal = maskUtils.decode(a_rle).squeeze()
-    bbox = mask_to_bbox(modal)
-    category = ann["category_id"]
-    return modal, bbox, category, amodal  # category as constant 1
-
-
 class MP3DDataset(object):
 
     def __init__(self, annot_fn):
@@ -209,6 +196,16 @@ class MP3DDataset(object):
         )
         return modal, bbox, category, image_fn, amodal
 
+    def read_MP3D(self, ann, h, w, load_occ_label=False):
+        assert "visible_mask" in ann.keys()  # must occluded
+        m_rle = [ann["visible_mask"]]
+        modal = maskUtils.decode(m_rle).squeeze()
+        a_rle = [ann["segmentation"]]
+        amodal = maskUtils.decode(a_rle).squeeze()
+        bbox = mask_to_bbox(modal)
+        category = ann["category_id"]
+        return modal, bbox, category, amodal  # category as constant 1
+
     def get_image_instances(
         self,
         idx,
@@ -228,7 +225,7 @@ class MP3DDataset(object):
         for reg in ann_info["regions"]:
             if ignore_stuff and reg["isStuff"]:
                 continue
-            modal, bbox, category, amodal = read_MP3D(
+            modal, bbox, category, amodal = self.read_MP3D(
                 reg, h, w, load_occ_label=load_occ_label
             )
             ret_modal.append(modal)

@@ -13,9 +13,9 @@ class SingleStageModel(object):
         self.model = backbone.__dict__[params["backbone_arch"]](
             **params["backbone_param"]
         )
-        # ipdb.set_trace()
+
         utils.init_weights(self.model, init_type="xavier")
-        # ipdb.set_trace()
+
         self.model.cuda()
         if dist_model:
             self.model = utils.DistModule(self.model)

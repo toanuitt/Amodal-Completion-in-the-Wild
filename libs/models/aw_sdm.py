@@ -1,10 +1,8 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 
 from libs import utils
-import inference as infer
+import libs.utils.inference as infer
 from . import SingleStageModel
 
 

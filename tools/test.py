@@ -4,24 +4,17 @@ import os
 import json
 import numpy as np
 from PIL import Image
-import pycocotools.mask as maskUtils
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
 import sys
 
 sys.path.append(".")
 from libs.datasets import reader
 from libs import models
-import inference as infer
+import libs.utils.inference as infer
 from libs import utils
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import torch
 
 import torchvision.transforms as transforms
-
-import ipdb
-from skimage import measure
 
 
 def parse_args():
@@ -109,7 +102,6 @@ class Tester(object):
         self.infer()
 
     def infer(self):
-        order_th = self.args.order_th
         amodal_th = self.args.amodal_th
 
         self.args.img_transform = transforms.Compose(
@@ -121,13 +113,8 @@ class Tester(object):
             ]
         )
 
-        segm_json_results = []
         self.count = 0
 
-        allpair_true_rec = utils.AverageMeter()
-        allpair_rec = utils.AverageMeter()
-        occpair_true_rec = utils.AverageMeter()
-        occpair_rec = utils.AverageMeter()
         intersection_rec = utils.AverageMeter()
         union_rec = utils.AverageMeter()
         target_rec = utils.AverageMeter()
@@ -135,10 +122,8 @@ class Tester(object):
         inv_intersection_rec = utils.AverageMeter()
         inv_union_rec = utils.AverageMeter()
 
-        list_acc, list_iou = [], []
+        list_iou = []
         list_inv_iou = []
-
-        print(self.data_length)
 
         for i in range(0, self.data_length):
             if self.args.dataset_format == "COCOA":

@@ -99,7 +99,7 @@ def main(args):
     if end_index >= len(img_names):
         end_index = len(img_names)
 
-    chosen_img_names = img_names[start_index : end_index + 1]
+    chosen_img_names = img_names[start_index:end_index]
 
     for img_name in tqdm(chosen_img_names):
         img_path = os.path.join(imgs_path, img_name)
