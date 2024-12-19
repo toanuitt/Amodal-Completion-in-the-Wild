@@ -101,11 +101,11 @@ class Tester(object):
 
             # data
             modal = Image.open(mask_path)
-            # modal = np.expand_dims(np.array(modal), axis=0)
             modal = np.array(modal)
 
             bbox = mask_to_bbox(modal)
 
+            modal = np.expand_dims(modal, axis=0)
             image = Image.open(image_path).convert("RGB")
             if (
                 image.size[0] != modal.shape[2]
