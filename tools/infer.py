@@ -75,7 +75,7 @@ class Tester(object):
         return np.array(new_bbox)
 
     def run(self):
-        # self.prepare_model()
+        self.prepare_model()
         self.infer()
 
     def infer(self):
