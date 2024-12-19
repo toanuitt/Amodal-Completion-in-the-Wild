@@ -109,7 +109,7 @@ class Tester(object):
 
             bbox = mask_to_bbox(modal)
             bbox = self.expand_bbox(bbox)
-
+            print(bbox)
             image = Image.open(image_path).convert("RGB")
 
             image = np.array(image)
