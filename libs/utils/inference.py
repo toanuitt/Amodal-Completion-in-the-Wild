@@ -493,11 +493,10 @@ def infer_amodal(
     min_input_size=16,
     interp="nearest",
 ):
-    num = modal.shape[0]
     inmodal_patches = []
     amodal_patches = []
 
-    org_h, org_w = modal[0].shape[0], modal[0].shape[1]
+    org_h, org_w = modal.shape[0], modal.shape[1]
 
     src_ft_dict = {}
     for layer_i in [0, 1, 2, 3]:
@@ -538,7 +537,7 @@ def infer_amodal(
             )  # L x h x w
             src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
             src_ft = utils.crop_padding(
-                src_ft, bbox[i], pad_value=(0,) * src_ft.shape[-1]
+                src_ft, bbox, pad_value=(0,) * src_ft.shape[-1]
             )  # h x w x L
             src_ft = torch.tensor(src_ft).permute(2, 0, 1).unsqueeze(0)
             src_ft = nn.Upsample(
