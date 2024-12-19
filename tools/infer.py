@@ -53,7 +53,7 @@ class Tester(object):
         self.model = models.__dict__[self.args.model["algo"]](
             self.args.model, dist_model=False
         )
-        self.model.load_state(self.args.load_model)
+        self.model.load_state(self.args.model_path)
         self.model.switch_to("eval")
 
     def expand_bbox(self, bbox):
