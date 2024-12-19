@@ -110,7 +110,6 @@ class Tester(object):
             modal = np.array(modal)
 
             bbox = mask_to_bbox(modal)
-            print(bbox)
             image = Image.open(image_path).convert("RGB")
 
             image = np.array(image)
@@ -142,7 +141,7 @@ class Tester(object):
                 interp="linear",
             )
 
-            amodal_mask = Image.fromarray(amodal_pred).convert("RGB")
+            amodal_mask = Image.fromarray(amodal_pred * 255).convert("RGB")
             amodal_name = f"{image_name.split('.')[0]}_amodal_mask.jpg"
             amodal_mask_path = os.path.join(self.args.output_root, amodal_name)
             amodal_mask.save(amodal_mask_path)
