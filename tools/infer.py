@@ -89,6 +89,9 @@ class Tester(object):
         )
 
         for image_name in os.listdir(self.args.image_root):
+            if "mask" in image_name:
+                continue
+
             image_path = os.path.join(self.args.image_root, image_name)
             mask_path = os.path.join(
                 self.args.image_root, f"{image_name.split('.')[0]}_mask.jpg"
@@ -101,26 +104,12 @@ class Tester(object):
             modal = np.array(modal)
 
             bbox = mask_to_bbox(modal)
+            bbox = self.expand_bbox(bbox)
 
             image = Image.open(image_path).convert("RGB")
-            # if (
-            #     image.size[0] != modal.shape[1]
-            #     or image.size[1] != modal.shape[0]
-            # ):
-            #     image = image.resize((modal.shape[1], modal.shape[1]))
 
             image = np.array(image)
             h, w = image.shape[:2]
-            bbox = self.expand_bbox(bbox)
-
-            # if self.args.order_method == "aw":
-            #     pass
-            # else:
-            #     raise Exception(
-            #         "No such order method: {}".format(self.args.order_method)
-            #     )
-
-            # if self.args.amodal_method == "aw_sdm5":  # supervised
 
             org_src_ft_dict = infer.get_feature_from_save(
                 self.args.feature_dirs, image_name
@@ -137,6 +126,7 @@ class Tester(object):
                 min_input_size=16,
                 interp="nearest",
             )
+
             amodal_pred = infer.recover_mask(
                 mask=amodal_patch_pred,
                 bbox=bbox,
@@ -145,7 +135,10 @@ class Tester(object):
                 interp="linear",
             )
 
-            print(amodal_pred)
+            amodal_mask = Image.fromarray(amodal_mask).convert("RGB")
+            amodal_name = f"{image_name.split('.')[0]}_amodal_mask.jpg"
+            amodal_mask_path = os.path.join(self.args.output_root, amodal_name)
+            amodal_mask.save(amodal_mask_path)
 
 
 if __name__ == "__main__":
