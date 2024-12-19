@@ -102,7 +102,6 @@ class Tester(object):
 
             bbox = mask_to_bbox(modal)
 
-            modal = np.expand_dims(modal, axis=0)
             image = Image.open(image_path).convert("RGB")
             if (
                 image.size[0] != modal.shape[2]
@@ -132,7 +131,7 @@ class Tester(object):
                 org_src_ft_dict=org_src_ft_dict,
                 modal=modal,
                 category=1,
-                bboxes=bbox,
+                bbox=bbox,
                 use_rgb=self.args.model["use_rgb"],
                 input_size=512,
                 min_input_size=16,

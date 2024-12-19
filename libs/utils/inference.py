@@ -487,7 +487,7 @@ def infer_amodal(
     org_src_ft_dict,
     modal,
     category,
-    bboxes,
+    bbox,
     use_rgb=True,
     input_size=None,
     min_input_size=16,
@@ -499,80 +499,79 @@ def infer_amodal(
 
     org_h, org_w = modal[0].shape[0], modal[0].shape[1]
 
-    for i in range(num):
-        src_ft_dict = {}
-        for layer_i in [0, 1, 2, 3]:
-            org_src_ft = org_src_ft_dict[layer_i]
-            src_ft_new_bbox = [
-                int(bboxes[i][0] * org_src_ft.shape[1] / org_w),
-                int(bboxes[i][1] * org_src_ft.shape[0] / org_h),
-                int(bboxes[i][2] * org_src_ft.shape[1] / org_w),
-                int(bboxes[i][3] * org_src_ft.shape[0] / org_h),
-            ]
-            src_ft = utils.crop_padding(
-                org_src_ft,
-                src_ft_new_bbox,
-                pad_value=(0,) * org_src_ft.shape[-1],
-            )
-            src_ft = torch.tensor(src_ft).permute(2, 0, 1).unsqueeze(0)
-            src_ft = src_ft.to("cuda")
-            if layer_i == 0:
-                cur_upsample_sz = 24
-            elif layer_i == 1:
-                cur_upsample_sz = 48
-            else:
-                cur_upsample_sz = 96
-            if src_ft.shape[-2] != 0 and src_ft.shape[-1] != 0:
-                src_ft = nn.Upsample(
-                    size=(cur_upsample_sz, cur_upsample_sz), mode="bilinear"
-                )(src_ft).squeeze(
-                    0
-                )  # L x h x w
-                src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
-            else:
-
-                src_ft = torch.tensor(org_src_ft).permute(2, 0, 1).unsqueeze(0)
-                src_ft = nn.Upsample(size=(org_h, org_w), mode="bilinear")(
-                    src_ft
-                ).squeeze(
-                    0
-                )  # L x h x w
-                src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
-                src_ft = utils.crop_padding(
-                    src_ft, bboxes[i], pad_value=(0,) * src_ft.shape[-1]
-                )  # h x w x L
-                src_ft = torch.tensor(src_ft).permute(2, 0, 1).unsqueeze(0)
-                src_ft = nn.Upsample(
-                    size=(cur_upsample_sz, cur_upsample_sz), mode="bilinear"
-                )(src_ft).squeeze(
-                    0
-                )  # L x h x w
-                src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
-
-            src_ft_dict[layer_i] = src_ft
-
-        inmodal_patch = utils.crop_padding(modal[i], bboxes[i], pad_value=(0,))
-
-        if input_size is not None:
-            newsize = input_size
-        elif min_input_size > bboxes[i, 2]:
-            newsize = min_input_size
-        else:
-            newsize = None
-        if newsize is not None:
-            inmodal_patch = resize_mask(inmodal_patch, newsize, interp)
-
-        inmodal_patches.append(inmodal_patch)
-        amodal_patches.append(
-            net_forward_aw_sdm(
-                model=model,
-                image=src_ft_dict,
-                inmodal_patch=inmodal_patch * category[i],
-                use_rgb=use_rgb,
-            )
+    src_ft_dict = {}
+    for layer_i in [0, 1, 2, 3]:
+        org_src_ft = org_src_ft_dict[layer_i]
+        src_ft_new_bbox = [
+            int(bbox[0] * org_src_ft.shape[1] / org_w),
+            int(bbox[1] * org_src_ft.shape[0] / org_h),
+            int(bbox[2] * org_src_ft.shape[1] / org_w),
+            int(bbox[3] * org_src_ft.shape[0] / org_h),
+        ]
+        src_ft = utils.crop_padding(
+            org_src_ft,
+            src_ft_new_bbox,
+            pad_value=(0,) * org_src_ft.shape[-1],
         )
+        src_ft = torch.tensor(src_ft).permute(2, 0, 1).unsqueeze(0)
+        src_ft = src_ft.to("cuda")
+        if layer_i == 0:
+            cur_upsample_sz = 24
+        elif layer_i == 1:
+            cur_upsample_sz = 48
+        else:
+            cur_upsample_sz = 96
+        if src_ft.shape[-2] != 0 and src_ft.shape[-1] != 0:
+            src_ft = nn.Upsample(
+                size=(cur_upsample_sz, cur_upsample_sz), mode="bilinear"
+            )(src_ft).squeeze(
+                0
+            )  # L x h x w
+            src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
+        else:
 
-        return amodal_patches
+            src_ft = torch.tensor(org_src_ft).permute(2, 0, 1).unsqueeze(0)
+            src_ft = nn.Upsample(size=(org_h, org_w), mode="bilinear")(
+                src_ft
+            ).squeeze(
+                0
+            )  # L x h x w
+            src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
+            src_ft = utils.crop_padding(
+                src_ft, bbox[i], pad_value=(0,) * src_ft.shape[-1]
+            )  # h x w x L
+            src_ft = torch.tensor(src_ft).permute(2, 0, 1).unsqueeze(0)
+            src_ft = nn.Upsample(
+                size=(cur_upsample_sz, cur_upsample_sz), mode="bilinear"
+            )(src_ft).squeeze(
+                0
+            )  # L x h x w
+            src_ft = src_ft.permute(1, 2, 0).cpu().numpy()  # h x w x L
+
+        src_ft_dict[layer_i] = src_ft
+
+    inmodal_patch = utils.crop_padding(modal, bbox, pad_value=(0,))
+
+    if input_size is not None:
+        newsize = input_size
+    elif min_input_size > bbox[i, 2]:
+        newsize = min_input_size
+    else:
+        newsize = None
+    if newsize is not None:
+        inmodal_patch = resize_mask(inmodal_patch, newsize, interp)
+
+    inmodal_patches.append(inmodal_patch)
+    amodal_patches.append(
+        net_forward_aw_sdm(
+            model=model,
+            image=src_ft_dict,
+            inmodal_patch=inmodal_patch * category[i],
+            use_rgb=use_rgb,
+        )
+    )
+
+    return amodal_patches
 
 
 def patch_to_fullimage(patches, bboxes, height, width, interp):
