@@ -143,7 +143,9 @@ def main(args):
         img[
             0 : anno["image_height"], anno["black_start"] : anno["black_end"]
         ] = [0, 0, 0]
-        img_tensor = (torch.Tensor([img]) / 255.0 - 0.5) * 2
+
+        img_tensor = (torch.Tensor(img) / 255.0 - 0.5) * 2
+        img_tensor = img_tensor.permute(2, 0, 1)
 
         fts = dift.forward(
             img_tensor=img_tensor,
