@@ -98,7 +98,7 @@ def main(img_tensor):
     fts = dift.forward(
         img_tensor=img_tensor,
         prompt="",
-        t=args.t,
+        t=181,
         up_ft_indices=up_ft_indices,
     )
     
