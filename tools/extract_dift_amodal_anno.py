@@ -119,7 +119,7 @@ def get_annos(anno_path):
         annos.append(
             {
                 "id": anno["id"],
-                "file_name": img_info,
+                "file_name": img_info["file_name"],
                 "image_height": img_info["height"],
                 "black_start": black_start,
                 "black_end": black_end,

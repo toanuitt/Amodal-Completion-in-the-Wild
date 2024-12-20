@@ -68,7 +68,7 @@ def convert_mask_to_polygon(mask):
 
 
 if __name__ == "__main__":
-    image_root = "D:/HocTap/KLTN/dataset/processed/mask_create/300"
+    image_root = "D:/HocTap/KLTN/dataset/processed/mask_create/50"
     anno_save_path = "test.json"
     split_percents = [0.3, 0.5, 0.7]
 
