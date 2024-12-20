@@ -14,6 +14,7 @@ sys.path.append(".")
 from libs import models
 from libs.utils import inference as infer
 from libs.utils.data_utils import mask_to_bbox
+from pycocotools.mask import encode
 
 
 def parse_args():
@@ -23,8 +24,6 @@ def parse_args():
     parser.add_argument("--image-root", required=True, type=str)
     parser.add_argument("--feature-dirs", required=True, type=str)
     parser.add_argument("--output-root", default=None, type=str)
-    # parser.add_argument("--order-method", required=True, type=str)
-    # parser.add_argument("--amodal-method", required=True, type=str)
     parser.add_argument("--order-th", default=0.1, type=float)
     parser.add_argument("--amodal-th", default=0.2, type=float)
     parser.add_argument("--dilate-kernel", default=0, type=int)
@@ -107,7 +106,7 @@ class Tester(object):
 
             # data
             modal = Image.open(mask_path)
-            modal = np.array(modal)
+            modal = encode(np.asfortranarray(np.array(modal)))
 
             bbox = mask_to_bbox(modal)
             image = Image.open(image_path).convert("RGB")
