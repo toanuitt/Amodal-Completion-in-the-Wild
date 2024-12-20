@@ -110,7 +110,6 @@ def get_annos(anno_path):
         img_info = image_dict[anno["image_id"]]
         black_start = 0
         black_end = 0
-        print(anno)
         if anno["last_col"] > 0:
             black_start = anno["last_col"]
             black_end = img_info["width"]
