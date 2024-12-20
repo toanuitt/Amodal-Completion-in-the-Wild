@@ -89,15 +89,15 @@ def get_image_tensor(image_path: str, image_size: list):
     return img_tensor
 
 
-def main(args, img_tensor):
-    dift = SDFeaturizer(sd_id=args.model_id)
+def main(img_tensor):
+    dift = SDFeaturizer(sd_id="stabilityai/stable-diffusion-2-1")
     up_ft_indices = [0, 1, 2, 3]
-    save_path = args.output_path
+    save_path = "data/dift_features"
 
     # Process single image
     fts = dift.forward(
         img_tensor=img_tensor,
-        prompt=args.prompt,
+        prompt="",
         t=args.t,
         up_ft_indices=up_ft_indices,
     )
