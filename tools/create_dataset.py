@@ -57,10 +57,7 @@ if __name__ == "__main__":
 
         mask = np.array(Image.open(mask_path))
 
-        rle = maskUtils.encode(np.asfortranarray(mask))
-
-        rle_mask = maskUtils.decode(rle).squeeze()
-        true_total = np.sum((rle_mask == mask) == True)
-        total += true_total / (mask.shape[0] * mask.shape[1])
+        # rle = maskUtils.encode(np.asfortranarray(mask))
+        # rle_mask = maskUtils.decode(rle).squeeze()
 
     print(total / len(os.listdir(image_root)))

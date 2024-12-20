@@ -14,7 +14,7 @@ sys.path.append(".")
 from libs import models
 from libs.utils import inference as infer
 from libs.utils.data_utils import mask_to_bbox
-from pycocotools.mask import encode
+from pycocotools.mask import encode, decode
 
 
 def parse_args():
@@ -106,7 +106,8 @@ class Tester(object):
 
             # data
             modal = Image.open(mask_path)
-            modal = encode(np.asfortranarray(np.array(modal)))
+            modal_rle = encode(np.asfortranarray(np.array(modal)))
+            modal = decode(modal_rle).squeeze()
 
             bbox = mask_to_bbox(modal)
             image = Image.open(image_path).convert("RGB")
