@@ -89,42 +89,24 @@ def get_image_tensor(image_path: str, image_size: list):
     return img_tensor
 
 
-def main(args):
+def main(args, img_tensor):
     dift = SDFeaturizer(sd_id=args.model_id)
     up_ft_indices = [0, 1, 2, 3]
-    imgs_path = args.input_path
     save_path = args.output_path
-    start_index = args.start_index
-    end_index = start_index + args.no_image
-    img_names = [
-        img_name for img_name in os.listdir(imgs_path) if is_image(img_name)
-    ]
 
-    if end_index >= len(img_names):
-        end_index = len(img_names)
-
-    chosen_img_names = img_names[start_index:end_index]
-
-    for img_name in tqdm(chosen_img_names):
-        img_path = os.path.join(imgs_path, img_name)
-        img_tensor = get_image_tensor(img_path, args.img_size)
-        fts = dift.forward(
-            img_tensor=img_tensor,
-            prompt=args.prompt,
-            t=args.t,
-            up_ft_indices=up_ft_indices,
-            ensemble_size=args.ensemble_size,
-        )
-
-        for key, value in fts.items():
-            cur_folder = os.path.join(
-                save_path, "t_" + str(args.t) + "_index_" + str(key)
-            )
-            if not os.path.exists(cur_folder):
-                os.makedirs(cur_folder)
-
-            tensor_file_name = os.path.join(cur_folder, img_name[:-4] + ".pt")
-            torch.save(value.squeeze(0).cpu(), tensor_file_name)
+    # Process single image
+    fts = dift.forward(
+        img_tensor=img_tensor,
+        prompt=args.prompt,
+        t=args.t,
+        up_ft_indices=up_ft_indices,
+    )
+    
+    # Save features
+    save_name = 'features.pth'
+    save_file = os.path.join(save_path, save_name)
+    torch.save(fts, save_file)
+    return fts
 
 
 if __name__ == "__main__":
