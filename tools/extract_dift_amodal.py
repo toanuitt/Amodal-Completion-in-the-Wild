@@ -106,6 +106,7 @@ def main(img_tensor):
     save_name = 'features.pth'
     save_file = os.path.join(save_path, save_name)
     torch.save(fts, save_file)
+    print(f"Features saved to: {os.path.abspath(save_file)}")
     return fts
 
 
