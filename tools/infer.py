@@ -46,24 +46,25 @@ def main(args):
 
 
 class Tester(object):
-    def __init__(self, args):
-        self.args = args
+    def __init__(self):
+        self.model_config = None
+        self.model = None
 
-    def prepare_model(self):
-        self.model = models.__dict__[self.args.model["algo"]](
-            self.args.model, dist_model=False
-        )
-        self.model.load_state(self.args.model_path)
+    def prepare_model(self, model_path):
+        with open("experiments\COCOA\pcnet_m\config_SDAmodal.yaml", "r") as file:
+            self.model_config = yaml.safe_load(file)
+        self.model = models.__dict__[self.model_config["algo"]](self.model_config, dist_model=False)
+        self.model.load_state(model_path)
         self.model.switch_to("eval")
 
-    def expand_bbox(self, bbox, height, width):
+    def expand_bbox(self, bbox, height, width, enlarge_box_factor):
         centerx = bbox[0] + bbox[2] / 2.0
         centery = bbox[1] + bbox[3] / 2.0
         x_limit = bbox[2] * 1.1 if (bbox[2] * 1.1) < width else width
         y_limit = bbox[3] * 1.1 if (bbox[3] * 1.1) < height else height
         size = max(
             [
-                np.sqrt(bbox[2] * bbox[3] * self.args.data["enlarge_box"]),
+                np.sqrt(bbox[2] * bbox[3] * enlarge_box_factor),
                 x_limit,
                 y_limit,
             ]
@@ -76,35 +77,27 @@ class Tester(object):
         ]
         return np.array(new_bbox)
 
-    def run(self):
-        self.prepare_model()
-        self.infer()
+    def run(self, model_path, image_root, output_root, feature_dirs):
+        self.prepare_model( model_path)
+        self.infer(image_root, output_root, feature_dirs)
 
-    def infer(self):
-        if not os.path.exists(self.args.output_root):
-            os.makedirs(self.args.output_root)
+    def infer(self, image_root, output_root, feature_dirs):
+        if not os.path.exists(output_root):
+            os.makedirs(output_root)
 
-        self.args.img_transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    self.args.data["data_mean"], self.args.data["data_std"]
-                ),
-            ]
-        )
 
-        for image_name in tqdm(os.listdir(self.args.image_root)):
+        for image_name in tqdm(os.listdir(image_root)):
             if "mask" in image_name:
                 continue
 
-            image_path = os.path.join(self.args.image_root, image_name)
+            image_path = os.path.join(image_root, image_name)
             mask_path = os.path.join(
-                self.args.image_root, f"{image_name.split('.')[0]}_mask.jpg"
+                image_root, f"{image_name.split('.')[0]}_mask.jpg"
             )
 
             assert os.path.exists(mask_path), f"Cannot find this {mask_path=}"
 
-            # data
+            # Load data
             modal = Image.open(mask_path)
             modal_rle = encode(np.asfortranarray(np.array(modal)))
             modal = decode(modal_rle).squeeze()
@@ -117,9 +110,7 @@ class Tester(object):
 
             bbox = self.expand_bbox(bbox, h, w)
 
-            org_src_ft_dict = infer.get_feature_from_save(
-                self.args.feature_dirs, image_name
-            )
+            org_src_ft_dict = infer.get_feature_from_save(feature_dirs, image_name)
 
             amodal_patch_pred = infer.infer_amodal(
                 model=self.model,
@@ -127,7 +118,7 @@ class Tester(object):
                 modal=modal,
                 category=1,
                 bbox=bbox,
-                use_rgb=self.args.model["use_rgb"],
+                use_rgb=self.model_config["use_rgb"],
                 input_size=512,
                 min_input_size=16,
                 interp="nearest",
@@ -143,10 +134,18 @@ class Tester(object):
 
             amodal_mask = Image.fromarray(amodal_pred * 255).convert("RGB")
             amodal_name = f"{image_name.split('.')[0]}_amodal_mask.jpg"
-            amodal_mask_path = os.path.join(self.args.output_root, amodal_name)
+            amodal_mask_path = os.path.join(output_root, amodal_name)
             amodal_mask.save(amodal_mask_path)
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    main(args)
+
+    model_path = "path/to/model_state.pth"
+    image_root = "path/to/images"
+    output_root = "path/to/output"
+    feature_dirs = "path/to/features"
+
+    # Create Tester instance and run
+    tester = Tester()
+    tester.run(model_path, image_root, output_root, feature_dirs)
+
